@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cementerio de Teresa de Cofrentes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 40px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #005f73;
+    }
+
+    h2 {
+      color: #007f7f;
+      margin-bottom: 10px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    .logo-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo-container img {
+      width: 200px; /* Ajusta el tamaño del logo según necesites */
+      height: auto;
+    }
+
+    .form-inputs input, .form-inputs select, button {
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007f7f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #005f73;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #005f73;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .acciones button {
+      background-color: #ff5722;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 5px;
+      padding: 5px 10px;
+    }
+
+    .acciones button:hover {
+      background-color: #d45d1f;
+    }
+
+    .busqueda-container {
+      margin-bottom: 20px;
+    }
+
+    .busqueda-container input {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Logo del Ayuntamiento -->
+    <div class="logo-container">
+      <img src="assets/images/Logo-ayuntamiento.png" alt="Logo Ayuntamiento Teresa de Cofrentes">
+    </div>
+
+    <h1>Cementerio de Teresa de Cofrentes</h1>
+
+    <h2>Añadir nueva tumba</h2>
+    <form id="tombForm" class="form-inputs">
+      <input type="text" placeholder="Nombre completo" id="nombre" required>
+      <input type="date" id="nacimiento" required>
+      <input type="date" id="fallecimiento" required>
+      <input type="text" placeholder="Ubicación" id="ubicacion" required>
+      <select id="estado">
+        <option value="libre">Libre</option>
+        <option value="ocupada">Ocupada</option>
+      </select>
+      <button type="submit">Añadir</button>
+    </form>
+
+    <div class="busqueda-container">
+      <h2>Buscar tumbas</h2>
+      <input type="text" id="busqueda" placeholder="Buscar por nombre o ubicación..." oninput="cargarTumbas()">
+    </div>
+
+    <h2>Listado de tumbas</h2>
+    <table id="tombsTable">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Nacimiento</th>
+          <th>Fallecimiento</th>
+          <th>Ubicación</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API = 'http://localhost:3000/api/tombs';
+
+    async function cargarTumbas() {
+      const res = await fetch(API);
+      const data = await res.json();
+      const filtro = document.getElementById('busqueda').value.toLowerCase();
+      const tbody = document.querySelector('#tombsTable tbody');
+      tbody.innerHTML = '';
+      data.filter(t => {
+        return (
+          t.nombre?.toLowerCase().includes(filtro) ||
+          t.ubicacion?.toLowerCase().includes(filtro)
+        );
+      }).forEach(t => {
+        tbody.innerHTML += `
+          <tr data-id="${t.id}">
+            <td><input value="${t.nombre || ''}" /></td>
+            <td><input type="date" value="${t.nacimiento || ''}" /></td>
+            <td><input type="date" value="${t.fallecimiento || ''}" /></td>
+            <td><input value="${t.ubicacion || ''}" /></td>
+            <td>
+              <select>
+                <option value="libre" ${t.estado === 'libre' ? 'selected' : ''}>Libre</option>
+                <option value="ocupada" ${t.estado === 'ocupada' ? 'selected' : ''}>Ocupada</option>
+              </select>
+            </td>
+            <td class="acciones">
+              <button onclick="guardarCambios(${t.id}, this)">Guardar</button>
+              <button onclick="eliminarTumba(${t.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById('tombForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nueva = {
+        nombre: document.getElementById('nombre').value,
+        nacimiento: document.getElementById('nacimiento').value,
+        fallecimiento: document.getElementById('fallecimiento').value,
+        ubicacion: document.getElementById('ubicacion').value,
+        estado: document.getElementById('estado').value,
+      };
+      await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nueva)
+      });
+      e.target.reset();
+      cargarTumbas();
+    });
+
+    async function guardarCambios(id, btn) {
+      const row = btn.closest('tr');
+      const inputs = row.querySelectorAll('input, select');
+      const actualizada = {
+        nombre: inputs[0].value,
+        nacimiento: inputs[1].value,
+        fallecimiento: inputs[2].value,
+        ubicacion: inputs[3].value,
+        estado: inputs[4].value,
+      };
+      await fetch(`${API}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(actualizada)
+      });
+      cargarTumbas();
+    }
+
+    async function eliminarTumba(id) {
+      if (confirm('¿Estás seguro de eliminar esta tumba?')) {
+        await fetch(`${API}/${id}`, { method: 'DELETE' });
+        cargarTumbas();
+      }
+    }
+
+    cargarTumbas();
+  </script>
+</body>
+</html>
