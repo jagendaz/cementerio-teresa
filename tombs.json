@@ -1,0 +1,18 @@
+[
+  {
+    "nombre": "Javier Pérez Tomás",
+    "nacimiento": "2005-08-09",
+    "fallecimiento": "2025-04-07",
+    "ubicacion": "Glorieta Nº 2",
+    "estado": "ocupada",
+    "id": 1744108545063
+  },
+  {
+    "nombre": "Soraya Sanchis Tomás",
+    "nacimiento": "2008-05-29",
+    "fallecimiento": "2025-04-07",
+    "ubicacion": "Glorieta Nº 3",
+    "estado": "ocupada",
+    "id": 1744108651725
+  }
+]
